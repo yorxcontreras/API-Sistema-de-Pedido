@@ -5,6 +5,8 @@ import java.util.List;
 
 public interface ProdutoService {
     void salvar(Produto produto);
+    void atualizar(Produto produto);
+    void deletar(int id);
     List<Produto> listarTodos();
     Produto buscarPorId(int id);
 }

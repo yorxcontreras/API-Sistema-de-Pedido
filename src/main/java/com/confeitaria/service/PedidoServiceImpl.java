@@ -2,56 +2,52 @@ package com.confeitaria.service;
 
 import com.confeitaria.model.Pedido;
 import com.confeitaria.model.Produto;
+import com.confeitaria.repository.PedidoRepository;
+import com.confeitaria.repository.ProdutoRepository;
 
-import java.util.HashMap;
-import java.util.Map;
+public class PedidoServiceImpl implements PedidoService {
 
-// regras de negocio da aplicação
+    private PedidoRepository pedidoRepository = new PedidoRepository();
 
-public class PedidoServiceImpl  implements PedidoService{
-
-    // usando hashmap pra simular o banco em memoria
-    private static Map<Integer, Pedido> pedidos = new HashMap<>();
-
-    // contador pra gerar o id
-    private static int contador= 1;
-
+    private ProdutoRepository produtoRepository = new ProdutoRepository();
 
     @Override
-    public Pedido salvar (Pedido pedido){
-        //inicia o id
-        pedido.id = contador++;
+    public Pedido salvar(Pedido pedido) {
 
-        // uma variavel pra valor total
+        // validação: pedido não pode ser vazio
+        if (pedido.itens == null || pedido.itens.isEmpty()) {
+            throw new RuntimeException("Pedido não pode ser vazio");
+        }
+
         double soma = 0.0;
 
-        // validação se a lista de itens nao esta vazia
-        if (pedido.itens != null) {
-            for (Produto p : pedido.itens) {
-                soma += p.preco; // Soma o preço de cada produto
-            }
-        }
-        // atribuindo soma a valor total
-        pedido.valorTotal = soma;
 
-        // inicia os pedidos com status Criado
+            for (Produto p : pedido.itens) {
+
+                Produto produtoBanco = produtoRepository.buscarPorId(p.getId());
+
+                if (produtoBanco == null) {
+                    throw new RuntimeException("Produto ID " + p.getId() + " não encontrado");
+                }
+
+                soma += produtoBanco.getPreco();
+            }
+
+
+        pedido.valorTotal = soma;
         pedido.status = "CRIADO";
 
-        // salva por enquanto no hashmap (futuro no banco)
-        pedidos.put(pedido.id ,pedido);
-        return pedido;
+        return pedidoRepository.salvar(pedido);
     }
 
-
-
     @Override
-    public Pedido buscarPorId(int id){
-        Pedido pedido = pedidos.get(id);
+    public Pedido buscarPorId(int id) {
+        Pedido pedido = pedidoRepository.buscarPorId(id);
 
-        // valida o pedido
-        if (pedido == null){
-            throw new RuntimeException("Pedido não foi encontrado");
+        if (pedido == null) {
+            throw new RuntimeException("Pedido não encontrado");
         }
+
         return pedido;
     }
 
@@ -59,25 +55,28 @@ public class PedidoServiceImpl  implements PedidoService{
     public void deletar(int id) {
         Pedido pedido = buscarPorId(id);
 
-        // valida pedido pago não pode ser deletado
-
         if ("PAGO".equals(pedido.status)) {
-            throw new RuntimeException("Pagamento já foi efetuado , então pedido não pode ser deletado");
+            throw new RuntimeException("Pedido já pago não pode ser deletado");
         }
-        pedidos.remove(id);
 
+        // 🔥 deletando no banco
+        pedidoRepository.deletar(id);
     }
 
     @Override
-    public void atualizarStatus(int id){
+    public void atualizarStatus(int id) {
 
         Pedido pedido = buscarPorId(id);
 
-        if (!"CRIADO".equals(pedido.status)){
-            throw new RuntimeException("Nao foi possivel o pagamento , o pedido não foi criado");
+        if (!"CRIADO".equals(pedido.status)) {
+            throw new RuntimeException("Pedido não pode ser pago");
         }
-        pedido.status = "PAGO";
+
+        if (pedido.valorTotal <= 0) {
+            throw new RuntimeException("Pedido inválido para pagamento");
+        }
+
+        // 🔥 atualizando no banco
+        pedidoRepository.atualizarStatus(id, "PAGO");
     }
-
-
 }

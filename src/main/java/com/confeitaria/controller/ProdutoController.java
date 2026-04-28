@@ -6,30 +6,61 @@ import com.confeitaria.service.ProdutoServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ProdutoController {
-    private ObjectMapper mapper = new ObjectMapper();
 
+    private ObjectMapper mapper = new ObjectMapper();
     private ProdutoService service = new ProdutoServiceImpl();
 
-    // POST /produtos (Cadastrar doce/bolo)
+    // POST /produtos
     public String cadastrarProduto(String json) {
         try {
             Produto prod = mapper.readValue(json, Produto.class);
-            // agr salvando o produto criado
             service.salvar(prod);
-            return "{\"status\": \"Produto " + prod.getNome() + " cadastrado!\"}";
+
+            return mapper.writeValueAsString(prod);
+
         } catch (Exception e) {
-            return "{\"erro\": \"Erro ao processar produto\"}";
+            return "{\"status\":\"ERROR\",\"mensagem\":\"Erro ao criar produto\"}";
         }
     }
 
-    // GET /produtos (Listar todos)
+    // GET /produtos
     public String listarProdutos() {
+        try {
+            return mapper.writeValueAsString(service.listarTodos());
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
 
-            try {
-                // AJUSTE retornando a lista atraves do service
-                return mapper.writeValueAsString(service.listarTodos());
-            } catch (Exception e) {
-                return "[]";
+    // GET /produtos/{id}
+    public String buscarProduto(int id) {
+        try {
+            Produto p = service.buscarPorId(id);
+            return mapper.writeValueAsString(p);
+
+        } catch (Exception e) {
+            return "{\"status\":\"ERROR\",\"mensagem\":\"Produto nao encontrado\"}";
+        }
+    }
+
+    // UPDATE/produtos/{id}
+    public String atualizarProduto(String json) {
+        try {
+            Produto p = mapper.readValue(json, Produto.class);
+            service.atualizar(p);
+            return "{\"status\": \"Produto atualizado com sucesso\"}";
+        } catch (Exception e) {
+            return "{\"erro\": \"Erro ao atualizar produto\"}";
+        }
+    }
+    // DELETE /produtos/{id}
+    public String deletarProduto(int id) {
+        try {
+            service.deletar(id);
+            return "{\"status\":\"OK\",\"mensagem\":\"Produto removido\"}";
+
+        } catch (Exception e) {
+            return "{\"status\":\"ERROR\",\"mensagem\":\"Erro ao deletar\"}";
         }
     }
 }

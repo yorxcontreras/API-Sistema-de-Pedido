@@ -61,4 +61,60 @@ public class PedidoRepository {
             throw new RuntimeException("Erro ao atualizar status do pedido", e);
         }
     }
+
+    public Pedido buscarPorId(int id) {
+        String sql = "SELECT * FROM pedido WHERE id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                Pedido pedido = new Pedido();
+                pedido.id = rs.getInt("id");
+                pedido.status = rs.getString("status");
+                pedido.valorTotal = rs.getDouble("valor_total");
+
+                return pedido;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao buscar pedido", e);
+        }
+
+        return null;
+    }
+    public void deletar(int id) {
+        String sqlItens = "DELETE FROM pedido_item WHERE pedido_id = ?";
+        String sqlPedido = "DELETE FROM pedido WHERE id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            try (
+                    PreparedStatement stmtItens = conn.prepareStatement(sqlItens);
+                    PreparedStatement stmtPedido = conn.prepareStatement(sqlPedido)
+            ) {
+                // primeiro remove os itens
+                stmtItens.setInt(1, id);
+                stmtItens.executeUpdate();
+
+                // depois remove o pedido
+                stmtPedido.setInt(1, id);
+                stmtPedido.executeUpdate();
+
+                conn.commit();
+
+            } catch (SQLException e) {
+                conn.rollback();
+                throw new RuntimeException("Erro ao deletar pedido", e);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro de conexão ao deletar", e);
+        }
+    }
 }

@@ -1,37 +1,63 @@
 package com.confeitaria.service;
 
 import com.confeitaria.model.Produto;
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.confeitaria.repository.ProdutoRepository;
+
 import java.util.List;
-import java.util.Map;
 
 public class ProdutoServiceImpl implements ProdutoService {
 
-    // O static para que produtos cadastrados não sumam
-    private static Map<Integer, Produto> produtos = new HashMap<>();
-    private static int contador = 1;
+    private ProdutoRepository produtoRepository = new ProdutoRepository();
 
     @Override
     public void salvar(Produto produto) {
-        produto.setId(contador++); //setId dita que cada produto tenha um ID único
-        produtos.put(produto.getId(), produto);
+
+        // validação básica
+        if (produto == null) {
+            throw new RuntimeException("Produto inválido");
+        }
+
+        if (produto.getNome() == null || produto.getNome().isBlank()) {
+            throw new RuntimeException("Nome do produto é obrigatório");
+        }
+
+        if (produto.getPreco() <= 0) {
+            throw new RuntimeException("Preço do produto inválido");
+        }
+
+        // salva no banco
+        produtoRepository.salvar(produto);
     }
 
+    public void atualizar(Produto produto) {
+        produtoRepository.atualizar(produto);
+    }
     @Override
     public List<Produto> listarTodos() {
-        // Transforma o Map em uma lista para o Controller mostrar no JSON
-        return new ArrayList<>(produtos.values());
+        return produtoRepository.listarTodos();
     }
 
     @Override
     public Produto buscarPorId(int id) {
-        Produto produto = produtos.get(id);
 
-        // validação de produto criado
+        Produto produto = produtoRepository.buscarPorId(id);
+
         if (produto == null) {
-            throw new RuntimeException("Produto não encontrado!");
+            throw new RuntimeException("Produto não encontrado");
         }
+
         return produto;
+    }
+
+    @Override
+    public void deletar(int id) {
+
+        Produto produto = buscarPorId(id);
+
+        if (produto == null) {
+            throw new RuntimeException("Produto não encontrado");
+        }
+
+        produtoRepository.deletar(id);
     }
 }
