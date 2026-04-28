@@ -50,7 +50,7 @@ public class Server {
                 response = produtoController.atualizarProduto(body);
             }
 
-            if (method.equals("DELETE")) {
+            if (method.equals("DELETEe")) {
                 int id = Integer.parseInt(exchange.getRequestURI().getQuery().split("=")[1]);
                 response = produtoController.deletarProduto(id);
             }
