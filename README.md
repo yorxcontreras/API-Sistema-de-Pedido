@@ -14,6 +14,8 @@ Este projeto consiste no desenvolvimento de uma API para gerenciamento de pedido
 
 A aplicação permite o cadastro de produtos, criação de pedidos com múltiplos itens, cálculo automático do valor total e controle de status de pagamento.
 
+O sistema agora realiza o consumo de uma API externa para processamento de pagamentos (https://github.com/Felipelima2001/APIexterna.git) e integra mensageria assíncrona utilizando RabbitMQ com uma arquitetura de conexões centralizada.
+
 O sistema foi desenvolvido em Java puro, sem uso de frameworks como Spring Boot, utilizando JDBC para integração com banco de dados MySQL.
 
 ---
@@ -39,6 +41,8 @@ O sistema foi desenvolvido em Java puro, sem uso de frameworks como Spring Boot,
 
 * Atualizar status do pedido para "PAGO"
 * Validação de status antes do pagamento
+* Integração com API externa de pagamentos para validação das transações
+* Mensageria assíncrona com publicação e consumo de mensagens de pagamento via RabbitMQ
 
 ---
 
@@ -50,10 +54,13 @@ O sistema foi desenvolvido em Java puro, sem uso de frameworks como Spring Boot,
 * XAMPP (phpMyAdmin)
 * Postman
 * Jackson (JSON)
+* RabbitMQ (Message Broker)
+* HttpClient (Consumo da API Externa)
 
 ---
 
 ## 🗄️ Estrutura do Banco de Dados
+
 
 ```sql
 CREATE DATABASE confeitaria_db;
@@ -77,79 +84,101 @@ CREATE TABLE pedido_item (
     FOREIGN KEY (pedido_id) REFERENCES pedido(id) ON DELETE CASCADE,
     FOREIGN KEY (produto_id) REFERENCES produto(id)
 );
-```
+🚀 Como Executar o Projeto
 
----
+Iniciar o MySQL pelo XAMPP
 
-## 🚀 Como Executar o Projeto
+Criar o banco de dados executando o script acima
 
-1. Iniciar o MySQL pelo XAMPP
-2. Criar o banco de dados executando o script acima
-3. Configurar usuário e senha no `ConnectionFactory`
-4. Executar a classe `Server.java`
-5. Testar as rotas utilizando o Postman
+Certificar-se de que o servidor do RabbitMQ está ativo e rodando localmente
 
----
+Certificar-se de que a API Externa de pagamentos está em execução
 
-## 🌐 Rotas da API
+Configurar usuário e senha do banco no ConnectionFactory e o host do RabbitMQ no RabbitMQConnection
 
-### 🟢 Produtos
+Executar a classe Server.java (API HTTP Principal)
 
-* `POST /produtos` → Cadastrar produto
-* `GET /produtos` → Listar produtos
-* `GET /produtos?id=1` → Buscar produto por ID
-* `PUT /produtos` → Atualizar produto
-* `DELETE /produtos?id=1` → Deletar produto
+Executar a classe RabbitMQConsumer.java em background para escutar a fila
 
----
+Testar as rotas utilizando o Postman
 
-### 🟡 Pedidos
+🌐 Rotas da API
 
-* `POST /pedidos` → Criar pedido
-* `GET /pedidos/buscar?id=1` → Buscar pedido
-* `DELETE /pedidos/deletar?id=1` → Deletar pedido
+🟢 Produtos
 
----
+POST /produtos → Cadastrar produto
 
-### 🔵 Pagamento
+GET /produtos → Listar produtos
 
-* `POST /pagamentos?id=1` → Confirmar pagamento
+GET /produtos?id=1 → Buscar produto por ID
 
----
+PUT /produtos → Atualizar produto
 
-## 🔄 Fluxo de Funcionamento
+DELETE /produtos?id=1 → Deletar produto
 
-1. Cadastro de produtos
-2. Criação de pedido com IDs dos produtos
-3. Cálculo automático do valor total
-4. Atualização do status para "PAGO"
-5. Validação de regras de negócio
+🟡 Pedidos
 
----
+POST /pedidos → Criar pedido
 
-## 🧩 Regras de Negócio
+GET /pedidos/buscar?id=1 → Buscar pedido
 
-* Pedido não pode ser criado sem itens
-* Produto deve ter preço válido
-* Pedido pago não pode ser deletado
-* Valor total é calculado automaticamente
+DELETE /pedidos/deletar?id=1 → Deletar pedido
 
----
+🔵 Pagamento
 
-## 📊 Considerações Finais
+POST /pagamentos?id=1 → Confirmar pagamento (Consome a API externa de validação e despacha o evento via RabbitMQProducer para a fila)
+
+🔄 Fluxo de Funcionamento
+
+Cadastro de produtos
+
+Criação de pedido com IDs dos produtos
+
+Cálculo automático do valor total
+
+Envio dos dados e validação do pagamento na API externa externa
+
+Publicação da confirmação na fila do RabbitMQ através do Producer
+
+Consumo da mensagem de forma assíncrona pelo Consumer para efetivar a baixa
+
+Atualização do status para "PAGO"
+
+Validação de regras de negócio
+
+🧩 Regras de Negócio
+
+Pedido não pode ser criado sem itens
+
+Produto deve ter preço válido
+
+Pedido pago não pode ser deletado
+
+Valor total é calculado automaticamente
+
+A confirmação final do pagamento depende do retorno positivo da API externa e do processamento correto da fila do RabbitMQ
+
+📊 Considerações Finais
 
 O projeto demonstra a aplicação de conceitos fundamentais de desenvolvimento backend, incluindo:
 
-* Arquitetura em camadas (Controller, Service, Repository)
-* Persistência de dados com JDBC
-* Manipulação de JSON
-* Implementação de regras de negócio
-* Integração com banco de dados relacional
+Arquitetura em camadas (Controller, Service, Repository)
 
----
+Persistência de dados com JDBC
 
-## ✅ Status do Projeto
+Manipulação de JSON
 
+Implementação de regras de negócio
+
+Integração com banco de dados relacional
+
+Centralização e reaproveitamento de conexões de mensageria com RabbitMQConnection
+
+Arquitetura baseada em eventos assíncronos (Producer/Consumer)
+
+Comunicação síncrona entre microsserviços via API REST externa
+
+✅ Status do Projeto
 ✔ Concluído
 ✔ Funcional
 ✔ Pronto para testes via Postman
