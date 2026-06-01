@@ -15,7 +15,9 @@ public class RabbitMQConsumer {
             // Garante que a fila está criada
             channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 
+
             System.out.println("[RABBITMQ] Aguardando mensagens na fila '" + QUEUE_NAME + "'...");
+
 
             // Define o comportamento de quando uma nova mensagem chegar
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
