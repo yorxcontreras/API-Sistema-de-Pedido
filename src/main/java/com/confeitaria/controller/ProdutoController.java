@@ -1,20 +1,20 @@
 package com.confeitaria.controller;
 
+import com.confeitaria.handler.ProdutoHandler;
 import com.confeitaria.model.Produto;
-import com.confeitaria.service.ProdutoService;
-import com.confeitaria.service.ProdutoServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ProdutoController {
 
     private ObjectMapper mapper = new ObjectMapper();
-    private ProdutoService service = new ProdutoServiceImpl();
+    private ProdutoHandler handler = new ProdutoHandler();
 
     // POST /produtos
     public String cadastrarProduto(String json) {
         try {
             Produto prod = mapper.readValue(json, Produto.class);
-            service.salvar(prod);
+
+            handler.salvar(prod);
 
             return mapper.writeValueAsString(prod);
 
@@ -26,7 +26,7 @@ public class ProdutoController {
     // GET /produtos
     public String listarProdutos() {
         try {
-            return mapper.writeValueAsString(service.listarTodos());
+            return mapper.writeValueAsString(handler.listarTodos());
         } catch (Exception e) {
             return "[]";
         }
@@ -35,7 +35,8 @@ public class ProdutoController {
     // GET /produtos/{id}
     public String buscarProduto(int id) {
         try {
-            Produto p = service.buscarPorId(id);
+            Produto p = handler.buscarPorId(id);
+
             return mapper.writeValueAsString(p);
 
         } catch (Exception e) {
@@ -43,20 +44,26 @@ public class ProdutoController {
         }
     }
 
-    // UPDATE/produtos/{id}
+    // PUT /produtos
     public String atualizarProduto(String json) {
         try {
             Produto p = mapper.readValue(json, Produto.class);
-            service.atualizar(p);
-            return "{\"status\": \"Produto atualizado com sucesso\"}";
+
+            handler.atualizar(p);
+
+            return "{\"status\":\"Produto atualizado com sucesso\"}";
+
         } catch (Exception e) {
-            return "{\"erro\": \"Erro ao atualizar produto\"}";
+            return "{\"erro\":\"Erro ao atualizar produto\"}";
         }
     }
+
     // DELETE /produtos/{id}
     public String deletarProduto(int id) {
         try {
-            service.deletar(id);
+
+            handler.deletar(id);
+
             return "{\"status\":\"OK\",\"mensagem\":\"Produto removido\"}";
 
         } catch (Exception e) {
