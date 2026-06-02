@@ -5,7 +5,7 @@
 * Giovanny dos Santos - 34612998
 * Yorx Anthony Contreras Pacheco - 34577220
 * Luiz Felipe Correa de Lima - 8826431297
-* -
+* André Gustavo dos Santos - 33230757
 ---
 
 ## 📌 Descrição do Projeto
